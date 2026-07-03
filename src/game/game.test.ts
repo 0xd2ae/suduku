@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAutoNotes, getCandidates } from "./candidates";
-import { cloneCells } from "./cellUtils";
+import { boxIndex, cellIndex, cloneCells } from "./cellUtils";
 import { getDailyPuzzle } from "./daily";
 import { createMove } from "./history";
 import { getNextHint } from "./hints";
@@ -25,12 +25,39 @@ describe("parsePuzzle", () => {
     expect(cells[0]).toMatchObject({ row: 0, col: 0, box: 0, value: 5, solution: 5, given: true });
     expect(cells[2]).toMatchObject({ row: 0, col: 2, box: 0, value: null, solution: 4, given: false });
   });
+
+  it("creates editable empty cells with empty notes and correct box indexes", () => {
+    const cells = parsePuzzle(puzzle);
+    expect(cells[2].given).toBe(false);
+    expect(cells[2].notes.size).toBe(0);
+    expect(cells[cellIndex(4, 4)].box).toBe(boxIndex(4, 4));
+    expect(cells[cellIndex(8, 8)].box).toBe(8);
+  });
+
+  it("rejects givens that do not match the solution", () => {
+    expect(() => parsePuzzle({ ...puzzle, puzzle: `9${puzzle.puzzle.slice(1)}` })).toThrow(
+      "puzzle value must match solution",
+    );
+  });
 });
 
 describe("candidates", () => {
   it("computes legal candidates for an empty cell", () => {
     const cells = parsePuzzle(puzzle);
     expect(getCandidates(cells, 0, 2)).toEqual([1, 2, 4]);
+  });
+
+  it("excludes row, column, and box values without using the hidden solution", () => {
+    const cells = parsePuzzle(puzzle);
+    expect(cells[cellIndex(0, 2)].solution).toBe(4);
+    expect(getCandidates(cells, 0, 2)).toContain(4);
+    expect(getCandidates(cells, 0, 2)).not.toContain(3);
+    expect(getCandidates(cells, 0, 2)).not.toContain(6);
+    expect(getCandidates(cells, 0, 2)).not.toContain(8);
+  });
+
+  it("returns no candidates for filled cells", () => {
+    expect(getCandidates(parsePuzzle(puzzle), 0, 0)).toEqual([]);
   });
 
   it("generates auto notes only for empty cells", () => {
@@ -67,6 +94,24 @@ describe("validator", () => {
     const result = validateBoard(cells, "conflict-only");
     expect(result.errors.some((error) => error.row === 0 && error.col === 2)).toBe(true);
   });
+
+  it("clears errors when a wrong value is deleted", () => {
+    const cells = parsePuzzle(puzzle);
+    cells[2] = { ...cells[2], value: 9 };
+    expect(validateBoard(cells, "solution-check").errors.some((error) => error.row === 0 && error.col === 2)).toBe(
+      true,
+    );
+    cells[2] = { ...cells[2], value: null };
+    expect(validateBoard(cells, "solution-check").errors).toEqual([]);
+  });
+
+  it("does not mark givens as user mistakes", () => {
+    const cells = parsePuzzle(puzzle);
+    cells[2] = { ...cells[2], value: 5 };
+    const result = validateBoard(cells, "conflict-only");
+    expect(result.errors.some((error) => error.row === 0 && error.col === 0)).toBe(false);
+    expect(result.errors.every((error) => error.row === 0 && error.col === 2)).toBe(true);
+  });
 });
 
 describe("solver", () => {
@@ -81,6 +126,13 @@ describe("solver", () => {
   it("stops counting after the solution limit", () => {
     expect(countSolutions("0".repeat(81), 2)).toBe(2);
   });
+
+  it("treats conflicting givens as unsolvable", () => {
+    const invalid = `55${"0".repeat(79)}`;
+    expect(solve(invalid)).toBeNull();
+    expect(countSolutions(invalid, 2)).toBe(0);
+    expect(hasUniqueSolution(invalid)).toBe(false);
+  });
 });
 
 describe("hints", () => {
@@ -88,8 +140,15 @@ describe("hints", () => {
     const cells = parsePuzzle(puzzle);
     const hint = getNextHint(cells);
     expect(hint).not.toBeNull();
+    const target = cells[cellIndex(hint?.cell.row ?? 0, hint?.cell.col ?? 0)];
+    expect(target.given).toBe(false);
+    expect(target.value).toBeNull();
+    expect(hint?.value).toBe(target.solution);
     expect(hint?.value).toBeGreaterThanOrEqual(1);
     expect(hint?.value).toBeLessThanOrEqual(9);
+    expect(hint?.relatedCells.every((cell) => cell.row >= 0 && cell.row < 9 && cell.col >= 0 && cell.col < 9)).toBe(
+      true,
+    );
   });
 });
 

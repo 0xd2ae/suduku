@@ -65,6 +65,16 @@ export type Move = {
   after: Cell[];
   action: MoveAction;
   timestamp: number;
+  beforeMeta?: MoveMeta;
+  afterMeta?: MoveMeta;
+};
+
+export type MoveMeta = {
+  mistakes: number;
+  hintsUsed: number;
+  elapsedSeconds: number;
+  completed: boolean;
+  paused: boolean;
 };
 
 export type DailyRecord = {

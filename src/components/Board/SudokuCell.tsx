@@ -17,6 +17,10 @@ export function SudokuCell({ cell, selected, peer, sameNumber, hinted, onSelect 
   const thickRight = cell.col === 8;
   const thickBottom = cell.row === 8;
 
+  const notesLabel = cell.notes.size > 0 ? `, notes ${[...cell.notes].join(" ")}` : "";
+  const valueLabel = cell.value === null ? "empty" : `value ${cell.value}`;
+  const sourceLabel = cell.given ? "given" : "editable";
+
   return (
     <button
       className={clsx(
@@ -32,7 +36,9 @@ export function SudokuCell({ cell, selected, peer, sameNumber, hinted, onSelect 
         cell.error && "animate-shake bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
       )}
       onClick={onSelect}
-      aria-label={`第 ${cell.row + 1} 行第 ${cell.col + 1} 列`}
+      role="gridcell"
+      aria-label={`Row ${cell.row + 1} Column ${cell.col + 1}, ${valueLabel}, ${sourceLabel}${notesLabel}`}
+      aria-selected={selected}
       aria-current={selected ? "true" : undefined}
     >
       {cell.value === null ? (

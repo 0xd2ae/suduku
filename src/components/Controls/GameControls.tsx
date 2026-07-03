@@ -8,6 +8,8 @@ export function GameControls() {
   const future = useGameStore((state) => state.future);
   const mistakes = useGameStore((state) => state.mistakes);
   const hintsUsed = useGameStore((state) => state.hintsUsed);
+  const paused = useGameStore((state) => state.paused);
+  const completed = useGameStore((state) => state.completed);
   const undo = useGameStore((state) => state.undo);
   const redo = useGameStore((state) => state.redo);
   const erase = useGameStore((state) => state.erase);
@@ -24,6 +26,7 @@ export function GameControls() {
   const toggleSetting = useSettingsStore((state) => state.toggle);
   const setInputOrder = useSettingsStore((state) => state.setInputOrder);
   const setCheckMode = useSettingsStore((state) => state.setCheckMode);
+  const disabled = paused || completed;
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -32,28 +35,28 @@ export function GameControls() {
         <div className="rounded-md bg-slate-100 p-2 dark:bg-slate-950">提示 {hintsUsed}</div>
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <button className="control-button" disabled={history.length === 0} onClick={undo} title="Undo">
+        <button className="control-button" disabled={paused || history.length === 0} onClick={undo} title="Undo" aria-label="Undo">
           ↶
         </button>
-        <button className="control-button" disabled={future.length === 0} onClick={redo} title="Redo">
+        <button className="control-button" disabled={paused || future.length === 0} onClick={redo} title="Redo" aria-label="Redo">
           ↷
         </button>
-        <button className="control-button" onClick={erase} title="Erase">
+        <button className="control-button" disabled={disabled} onClick={erase} title="Erase" aria-label="Erase">
           ⌫
         </button>
-        <ToggleButton pressed={inputMode === "notes"} onClick={toggleNotesMode}>
+        <ToggleButton pressed={inputMode === "notes"} disabled={disabled} onClick={toggleNotesMode}>
           Notes
         </ToggleButton>
-        <button className="control-button" onClick={hint}>
+        <button className="control-button" disabled={disabled} onClick={hint}>
           Hint
         </button>
-        <button className="control-button" onClick={fillHint}>
+        <button className="control-button" disabled={disabled} onClick={fillHint}>
           Fill
         </button>
-        <button className="control-button" onClick={check}>
+        <button className="control-button" disabled={disabled} onClick={check}>
           Check
         </button>
-        <button className="control-button" onClick={autoNotes}>
+        <button className="control-button" disabled={disabled} onClick={autoNotes}>
           Auto
         </button>
         <button className="control-button" onClick={resetCurrentGame}>

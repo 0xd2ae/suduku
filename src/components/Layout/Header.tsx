@@ -11,6 +11,7 @@ export function Header() {
   const difficulty = useGameStore((state) => state.difficulty);
   const elapsedSeconds = useGameStore((state) => state.elapsedSeconds);
   const paused = useGameStore((state) => state.paused);
+  const completed = useGameStore((state) => state.completed);
   const goHome = useGameStore((state) => state.goHome);
   const pause = useGameStore((state) => state.pause);
   const resume = useGameStore((state) => state.resume);
@@ -20,7 +21,7 @@ export function Header() {
 
   return (
     <header className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <button className="control-button w-10" onClick={goHome} title="Back">
+      <button className="control-button w-10" onClick={goHome} title="Back" aria-label="Back">
         ‹
       </button>
       <div className="min-w-0 flex-1 text-center">
@@ -29,13 +30,18 @@ export function Header() {
         </div>
         {timerVisible && <div className="text-lg font-bold tabular-nums">{formatTime(elapsedSeconds)}</div>}
       </div>
-      <button className="control-button w-10" onClick={() => toggleDarkMode("darkMode")} title="Theme">
+      <button className="control-button w-10" onClick={() => toggleDarkMode("darkMode")} title="Theme" aria-label="Theme">
         ◐
       </button>
-      <button className="control-button w-10" onClick={paused ? resume : pause} title="Pause">
+      <button
+        className="control-button w-10"
+        disabled={completed}
+        onClick={paused ? resume : pause}
+        title={paused ? "Resume" : "Pause"}
+        aria-label={paused ? "Resume" : "Pause"}
+      >
         {paused ? "▶" : "Ⅱ"}
       </button>
     </header>
   );
 }
-

@@ -7,6 +7,18 @@ function parseGrid(puzzle: string): number[] {
   return puzzle.split("").map(Number);
 }
 
+function hasConflictingGivens(grid: number[]): boolean {
+  for (let index = 0; index < grid.length; index += 1) {
+    const value = grid[index];
+    if (value === 0) continue;
+    grid[index] = 0;
+    const valid = isValid(grid, index, value);
+    grid[index] = value;
+    if (!valid) return true;
+  }
+  return false;
+}
+
 function isValid(grid: number[], index: number, value: number): boolean {
   const row = Math.floor(index / 9);
   const col = index % 9;
@@ -47,6 +59,7 @@ function findBestEmpty(grid: number[]): number {
 
 export function solve(puzzle: string): string | null {
   const grid = parseGrid(puzzle);
+  if (hasConflictingGivens(grid)) return null;
 
   function backtrack(): boolean {
     const index = findBestEmpty(grid);
@@ -66,6 +79,7 @@ export function solve(puzzle: string): string | null {
 
 export function countSolutions(puzzle: string, limit = 2): number {
   const grid = parseGrid(puzzle);
+  if (hasConflictingGivens(grid)) return 0;
   let count = 0;
 
   function backtrack(): void {
@@ -92,4 +106,3 @@ export function countSolutions(puzzle: string, limit = 2): number {
 export function hasUniqueSolution(puzzle: string): boolean {
   return countSolutions(puzzle, 2) === 1;
 }
-

@@ -8,6 +8,7 @@ export function SudokuBoard() {
   const activeHint = useGameStore((state) => state.activeHint);
   const selectedDigit = useGameStore((state) => state.selectedDigit);
   const paused = useGameStore((state) => state.paused);
+  const completed = useGameStore((state) => state.completed);
   const selectCell = useGameStore((state) => state.selectCell);
   const highlightPeers = useSettingsStore((state) => state.highlightPeers);
   const highlightSameNumbers = useSettingsStore((state) => state.highlightSameNumbers);
@@ -23,14 +24,19 @@ export function SudokuBoard() {
         className={`grid aspect-square w-[min(92vw,560px)] touch-manipulation grid-cols-9 overflow-hidden rounded-md border-2 border-slate-900 bg-slate-900 shadow-sm transition dark:border-slate-500 ${
           paused ? "pointer-events-none blur-sm" : ""
         }`}
+        role="grid"
+        aria-label="Sudoku board"
       >
         {cells.map((cell) => {
           const isSelected = selectedCell?.row === cell.row && selectedCell.col === cell.col;
           const isPeer =
             Boolean(selected) &&
+            !paused &&
+            !completed &&
             !isSelected &&
             (cell.row === selected?.row || cell.col === selected?.col || cell.box === selected?.box);
-          const isSameNumber = Boolean(highlightedValue) && cell.value === highlightedValue && cell.value !== null;
+          const isSameNumber =
+            !paused && !completed && Boolean(highlightedValue) && cell.value === highlightedValue && cell.value !== null;
           const isHinted = activeHint?.cell.row === cell.row && activeHint.cell.col === cell.col;
           return (
             <SudokuCell

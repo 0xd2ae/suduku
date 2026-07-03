@@ -25,6 +25,8 @@ export function NumberPad() {
                 filled ? "opacity-35" : ""
               } ${selectedDigit === digit && inputOrder === "number-first" ? "ring-2 ring-teal-950 dark:ring-white" : ""}`}
               disabled={paused || completed}
+              aria-label={`Number ${digit}, ${remaining} remaining`}
+              aria-pressed={selectedDigit === digit && inputOrder === "number-first"}
               onClick={() => {
                 if (inputOrder === "number-first") setSelectedDigit(digit);
                 else inputDigit(digit);

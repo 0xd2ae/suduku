@@ -10,7 +10,7 @@ import { markErrors, validateBoard } from "../game/validator";
 import { getFirstPuzzle, getPuzzleById, getRandomPuzzle } from "../data/puzzles";
 import { useSettingsStore } from "./settingsStore";
 import { useStatsStore } from "./statsStore";
-import type { Cell, CellPosition, Difficulty, Hint, InputMode, Move, MoveAction, Puzzle } from "../game/types";
+import type { Cell, CellPosition, Difficulty, Hint, InputMode, Move, MoveAction, MoveMeta, Puzzle } from "../game/types";
 
 export type GameState = {
   puzzleId: string;
@@ -154,7 +154,7 @@ function deserializeMove(move: SerializedMove): Move {
   };
 }
 
-function saveGame(state: GameState): void {
+export function saveGame(state: GameState): void {
   const data: { version: number; state: PersistedGameState } = {
     version: SAVE_VERSION,
     state: {
@@ -180,7 +180,7 @@ function saveGame(state: GameState): void {
   localStorage.setItem(GAME_STATE_KEY, JSON.stringify(data));
 }
 
-function loadGame() {
+export function loadGame() {
   const raw = localStorage.getItem(GAME_STATE_KEY);
   if (!raw) return null;
   try {
@@ -207,10 +207,26 @@ function withValidation(cells: Cell[], force = false): Cell[] {
     : cells.map((cell) => ({ ...cell, error: false }));
 }
 
-function pushMove(state: GameState, before: Cell[], after: Cell[], action: MoveAction): Partial<GameState> {
+function getMoveMeta(state: Pick<GameState, "mistakes" | "hintsUsed" | "elapsedSeconds" | "completed" | "paused">): MoveMeta {
+  return {
+    mistakes: state.mistakes,
+    hintsUsed: state.hintsUsed,
+    elapsedSeconds: state.elapsedSeconds,
+    completed: state.completed,
+    paused: state.paused,
+  };
+}
+
+function pushMove(
+  state: GameState,
+  before: Cell[],
+  after: Cell[],
+  action: MoveAction,
+  afterMeta = getMoveMeta(state),
+): Partial<GameState> {
   return {
     cells: after,
-    history: [...state.history, createMove(before, after, action)],
+    history: [...state.history, createMove(before, after, action, getMoveMeta(state), afterMeta)],
     future: [],
     activeHint: null,
   };
@@ -232,7 +248,7 @@ function maybeComplete(next: GameState): Partial<GameState> {
     };
     localStorage.setItem(DAILY_RECORDS_KEY, JSON.stringify({ version: SAVE_VERSION, records: [record] }));
   }
-  return { completed: true, paused: true };
+  return { completed: true, paused: false };
 }
 
 const restored = loadGame();
@@ -280,10 +296,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   toggleNotesMode: () => set({ inputMode: get().inputMode === "normal" ? "notes" : "normal" }),
   inputDigit: (digit, action = "set-value") => {
     const state = get();
+    if (!Number.isInteger(digit) || digit < 1 || digit > 9) return;
     if (state.completed || state.paused || !state.selectedCell) return;
     const index = cellIndex(state.selectedCell.row, state.selectedCell.col);
     const target = state.cells[index];
     if (target.given) return;
+    if (state.inputMode === "normal" && action !== "hint" && target.value === digit) return;
     const before = cloneCells(state.cells);
     let after = cloneCells(state.cells);
 
@@ -301,15 +319,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
 
     after[index] = { ...after[index], value: digit, notes: new Set<number>() };
-    if (useSettingsStore.getState().autoRemoveNotes && digit === after[index].solution) {
+    if (useSettingsStore.getState().autoRemoveNotes) {
       after = removePeerNotes(after, after[index].row, after[index].col, digit);
     }
     after = withValidation(after);
-    const mistakeIncrement = currentCheckMode() === "solution-check" && digit !== target.solution ? 1 : 0;
-    const update = pushMove({ ...state, mistakes: state.mistakes + mistakeIncrement }, before, after, action);
-    const next = { ...state, ...update, mistakes: state.mistakes + mistakeIncrement } as GameState;
+    const repeatedSameWrongValue = target.value === digit && digit !== target.solution;
+    const mistakeIncrement =
+      currentCheckMode() === "solution-check" && digit !== target.solution && !repeatedSameWrongValue ? 1 : 0;
+    const nextMistakes = state.mistakes + mistakeIncrement;
+    const nextHintsUsed = action === "hint" ? state.hintsUsed + 1 : state.hintsUsed;
+    const willComplete = !state.completed && validateBoard(after, "solution-check").solved;
+    const update = pushMove(
+      state,
+      before,
+      after,
+      action,
+      getMoveMeta({
+        ...state,
+        mistakes: nextMistakes,
+        hintsUsed: nextHintsUsed,
+        completed: willComplete,
+        paused: state.paused,
+      }),
+    );
+    const next = { ...state, ...update, mistakes: nextMistakes, hintsUsed: nextHintsUsed } as GameState;
     const completion = maybeComplete(next);
-    set({ ...update, mistakes: next.mistakes, ...completion });
+    set({ ...update, mistakes: next.mistakes, hintsUsed: next.hintsUsed, ...completion });
     saveGame({ ...next, ...completion });
   },
   erase: () => {
@@ -317,6 +352,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (state.completed || state.paused || !state.selectedCell) return;
     const index = cellIndex(state.selectedCell.row, state.selectedCell.col);
     if (state.cells[index].given) return;
+    if (state.cells[index].value === null && state.cells[index].notes.size === 0 && !state.cells[index].error) return;
     const before = cloneCells(state.cells);
     let after = cloneCells(state.cells);
     after[index] = { ...after[index], value: null, notes: new Set<number>(), error: false };
@@ -342,15 +378,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   hint: () => {
     if (get().completed || get().paused) return;
+    if (validateBoard(get().cells, "conflict-only").errors.length > 0) {
+      set({ activeHint: null });
+      return;
+    }
     const activeHint = getNextHint(get().cells);
     set({ activeHint, selectedCell: activeHint?.cell ?? get().selectedCell });
   },
   fillHint: () => {
     const state = get();
     if (state.completed || state.paused) return;
+    if (validateBoard(state.cells, "conflict-only").errors.length > 0) return;
     const hint = state.activeHint ?? getNextHint(state.cells);
     if (!hint) return;
-    set({ selectedCell: hint.cell, inputMode: "normal", hintsUsed: state.hintsUsed + 1, activeHint: hint });
+    set({ selectedCell: hint.cell, inputMode: "normal", activeHint: hint });
     get().inputDigit(hint.value, "hint");
   },
   undo: () => {
@@ -362,8 +403,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       cells: cloneCells(move.before),
       history: state.history.slice(0, -1),
       future: [...state.future, move],
-      completed: false,
-      paused: false,
+      ...(move.beforeMeta ?? { completed: false, paused: false }),
     };
     set(next);
     saveGame({ ...state, ...next });
@@ -377,9 +417,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       cells: cloneCells(move.after),
       history: [...state.history, move],
       future: state.future.slice(0, -1),
+      ...(move.afterMeta ?? {}),
     };
-    set(next);
-    saveGame({ ...state, ...next });
+    const completion = move.afterMeta?.completed ? {} : maybeComplete({ ...state, ...next } as GameState);
+    set({ ...next, ...completion });
+    saveGame({ ...state, ...next, ...completion });
   },
   pause: () => {
     set({ paused: true });
