@@ -1,4 +1,5 @@
 import { SudokuCell } from "./SudokuCell";
+import { areCellsRelated, isSameNumberHighlight } from "../../game/cellUtils";
 import { useGameStore } from "../../store/gameStore";
 import { useSettingsStore } from "../../store/settingsStore";
 
@@ -21,7 +22,7 @@ export function SudokuBoard() {
   return (
     <section className="flex justify-center">
       <div
-        className={`grid aspect-square w-[min(92vw,calc(100dvh-400px),560px)] touch-manipulation grid-cols-9 overflow-hidden rounded-md border-2 border-slate-900 bg-slate-900 shadow-sm transition dark:border-slate-500 lg:w-[min(92vw,560px)] ${
+        className={`grid aspect-square w-[min(92vw,calc(100dvh-400px),560px)] touch-manipulation grid-cols-9 overflow-hidden rounded-md border-[3px] border-slate-900 bg-slate-900 shadow-sm transition dark:border-slate-200 lg:w-[min(92vw,560px)] ${
           paused ? "pointer-events-none blur-sm" : ""
         }`}
         role="grid"
@@ -30,13 +31,8 @@ export function SudokuBoard() {
         {cells.map((cell) => {
           const isSelected = selectedCell?.row === cell.row && selectedCell.col === cell.col;
           const isPeer =
-            Boolean(selected) &&
-            !paused &&
-            !completed &&
-            !isSelected &&
-            (cell.row === selected?.row || cell.col === selected?.col || cell.box === selected?.box);
-          const isSameNumber =
-            !paused && !completed && Boolean(highlightedValue) && cell.value === highlightedValue && cell.value !== null;
+            selected != null && !paused && !completed && !isSelected && areCellsRelated(cell, selected);
+          const isSameNumber = !paused && !completed && isSameNumberHighlight(cell, highlightedValue);
           const isHinted = activeHint?.cell.row === cell.row && activeHint.cell.col === cell.col;
           return (
             <SudokuCell
