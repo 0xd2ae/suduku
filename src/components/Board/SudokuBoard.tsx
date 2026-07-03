@@ -21,7 +21,7 @@ export function SudokuBoard() {
   return (
     <section className="flex justify-center">
       <div
-        className={`grid aspect-square w-[min(92vw,560px)] touch-manipulation grid-cols-9 overflow-hidden rounded-md border-2 border-slate-900 bg-slate-900 shadow-sm transition dark:border-slate-500 ${
+        className={`grid aspect-square w-[min(92vw,calc(100dvh-400px),560px)] touch-manipulation grid-cols-9 overflow-hidden rounded-md border-2 border-slate-900 bg-slate-900 shadow-sm transition dark:border-slate-500 lg:w-[min(92vw,560px)] ${
           paused ? "pointer-events-none blur-sm" : ""
         }`}
         role="grid"

@@ -11,7 +11,7 @@ export function NumberPad() {
   const inputOrder = useSettingsStore((state) => state.inputOrder);
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:p-3">
       <div className="grid grid-cols-9 gap-1 lg:grid-cols-3 lg:gap-2">
         {Array.from({ length: 9 }, (_, index) => {
           const digit = index + 1;

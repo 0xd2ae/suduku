@@ -34,6 +34,7 @@ lerna-debug.log*
 .DS_Store
 
 # Playwright
+.playwright-cli
 /test-results/
 /playwright-report/
 /blob-report/

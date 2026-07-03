@@ -29,41 +29,78 @@ export function GameControls() {
   const disabled = paused || completed;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="mb-3 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-md bg-slate-100 p-2 dark:bg-slate-950">错误 {mistakes}</div>
-        <div className="rounded-md bg-slate-100 p-2 dark:bg-slate-950">提示 {hintsUsed}</div>
+    <section className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:p-3">
+      <div className="mb-2 grid grid-cols-2 gap-1 text-xs lg:mb-3 lg:gap-2 lg:text-sm">
+        <div className="rounded-md bg-slate-100 px-2 py-1 dark:bg-slate-950 lg:p-2">错误 {mistakes}</div>
+        <div className="rounded-md bg-slate-100 px-2 py-1 dark:bg-slate-950 lg:p-2">提示 {hintsUsed}</div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        <button className="control-button" disabled={paused || history.length === 0} onClick={undo} title="Undo" aria-label="Undo">
+      <div className="grid grid-cols-5 gap-1 lg:grid-cols-3 lg:gap-2">
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          disabled={paused || history.length === 0}
+          onClick={undo}
+          title="Undo"
+          aria-label="Undo"
+        >
           ↶
         </button>
-        <button className="control-button" disabled={paused || future.length === 0} onClick={redo} title="Redo" aria-label="Redo">
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          disabled={paused || future.length === 0}
+          onClick={redo}
+          title="Redo"
+          aria-label="Redo"
+        >
           ↷
         </button>
-        <button className="control-button" disabled={disabled} onClick={erase} title="Erase" aria-label="Erase">
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          disabled={disabled}
+          onClick={erase}
+          title="Erase"
+          aria-label="Erase"
+        >
           ⌫
         </button>
         <ToggleButton pressed={inputMode === "notes"} disabled={disabled} onClick={toggleNotesMode}>
           Notes
         </ToggleButton>
-        <button className="control-button" disabled={disabled} onClick={hint}>
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          disabled={disabled}
+          onClick={hint}
+        >
           Hint
         </button>
-        <button className="control-button" disabled={disabled} onClick={fillHint}>
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          disabled={disabled}
+          onClick={fillHint}
+        >
           Fill
         </button>
-        <button className="control-button" disabled={disabled} onClick={check}>
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          disabled={disabled}
+          onClick={check}
+        >
           Check
         </button>
-        <button className="control-button" disabled={disabled} onClick={autoNotes}>
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          disabled={disabled}
+          onClick={autoNotes}
+        >
           Auto
         </button>
-        <button className="control-button" onClick={resetCurrentGame}>
+        <button
+          className="control-button min-h-9 px-1 py-1 text-xs lg:min-h-11 lg:px-3 lg:py-2 lg:text-sm"
+          onClick={resetCurrentGame}
+        >
           Reset
         </button>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-2 grid grid-cols-2 gap-1 lg:mt-3 lg:gap-2">
         <ToggleButton pressed={autoCheck} onClick={() => toggleSetting("autoCheck")}>
           Auto Check
         </ToggleButton>
@@ -71,9 +108,9 @@ export function GameControls() {
           Clean Notes
         </ToggleButton>
       </div>
-      <div className="mt-3 rounded-md bg-slate-100 p-2 dark:bg-slate-950">
-        <div className="mb-2 text-xs font-semibold uppercase text-slate-500">Settings</div>
-        <div className="grid grid-cols-2 gap-2">
+      <div className="mt-2 lg:mt-3 lg:rounded-md lg:bg-slate-100 lg:p-2 lg:dark:bg-slate-950">
+        <div className="mb-2 hidden text-xs font-semibold uppercase text-slate-500 lg:block">Settings</div>
+        <div className="grid grid-cols-4 gap-1 lg:grid-cols-2 lg:gap-2">
           <ToggleButton pressed={inputOrder === "cell-first"} onClick={() => setInputOrder("cell-first")}>
             Cell First
           </ToggleButton>

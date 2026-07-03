@@ -37,15 +37,21 @@ export function GamePage() {
   }, [check, erase, hint, inputDigit, moveSelection, redo, toggleNotesMode, undo]);
 
   return (
-    <main className="min-h-screen bg-slate-100 px-3 py-3 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-5">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4">
+    <main className="min-h-screen bg-slate-100 px-3 py-2 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-5 lg:py-3">
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 lg:gap-4">
         <Header />
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,620px)_320px] lg:justify-center">
+        <div className="grid items-start gap-2 lg:grid-cols-[minmax(0,620px)_320px] lg:justify-center lg:gap-4">
           <SudokuBoard />
-          <aside className="flex flex-col gap-3">
-            <NumberPad />
-            <GameControls />
-            <DeveloperPanel />
+          <aside className="flex flex-col gap-2 lg:gap-3">
+            <div className="order-1 lg:order-2">
+              <NumberPad />
+            </div>
+            <div className="order-2 lg:order-1">
+              <GameControls />
+            </div>
+            <div className="order-3">
+              <DeveloperPanel />
+            </div>
           </aside>
         </div>
       </div>

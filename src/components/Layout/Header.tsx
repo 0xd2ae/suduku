@@ -20,7 +20,7 @@ export function Header() {
   const toggleDarkMode = useSettingsStore((state) => state.toggle);
 
   return (
-    <header className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <header className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:p-3">
       <button className="control-button w-10" onClick={goHome} title="Back" aria-label="Back">
         ‹
       </button>
