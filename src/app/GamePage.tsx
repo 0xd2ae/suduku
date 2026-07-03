@@ -43,8 +43,8 @@ export function GamePage() {
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,620px)_320px] lg:justify-center">
           <SudokuBoard />
           <aside className="flex flex-col gap-3">
-            <GameControls />
             <NumberPad />
+            <GameControls />
             <DeveloperPanel />
           </aside>
         </div>
