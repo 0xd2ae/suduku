@@ -6,7 +6,7 @@ import { createMove } from "./history";
 import { getNextHint } from "./hints";
 import { parsePuzzle } from "./puzzleParser";
 import { countSolutions, hasUniqueSolution, solve } from "./solver";
-import { validateBoard } from "./validator";
+import { markErrors, validateBoard } from "./validator";
 const puzzle = {
   id: "test-001",
   difficulty: "easy" as const,
@@ -105,12 +105,37 @@ describe("validator", () => {
     expect(validateBoard(cells, "solution-check").errors).toEqual([]);
   });
 
-  it("does not mark givens as user mistakes", () => {
+  it("marks every cell in a duplicate conflict, including the given cell it duplicates", () => {
     const cells = parsePuzzle(puzzle);
+    // (0,0) is a given 5; setting (0,2) to 5 duplicates it within the same row and box.
     cells[2] = { ...cells[2], value: 5 };
     const result = validateBoard(cells, "conflict-only");
-    expect(result.errors.some((error) => error.row === 0 && error.col === 0)).toBe(false);
-    expect(result.errors.every((error) => error.row === 0 && error.col === 2)).toBe(true);
+    const positions = new Set(result.errors.map((error) => `${error.row}-${error.col}`));
+    expect(positions.has("0-0")).toBe(true);
+    expect(positions.has("0-2")).toBe(true);
+    expect(result.errors.every((error) => error.reason !== "wrong-value")).toBe(true);
+  });
+
+  it("markErrors flags both sides of a duplicate pair, including a given cell", () => {
+    const cells = parsePuzzle(puzzle);
+    cells[2] = { ...cells[2], value: 5 };
+    const marked = markErrors(cells, "conflict-only");
+    expect(marked[cellIndex(0, 0)].error).toBe(true);
+    expect(marked[cellIndex(0, 2)].error).toBe(true);
+    expect(marked[cellIndex(0, 0)].given).toBe(true);
+  });
+
+  it("never assigns a given cell the wrong-value reason, even when it conflicts with a duplicate", () => {
+    const cells = parsePuzzle(puzzle);
+    // (2,1) is a given 9; setting (0,2) to 9 duplicates it within the same box.
+    cells[2] = { ...cells[2], value: 9 };
+    const result = validateBoard(cells, "solution-check");
+    const givenPositions = new Set(cells.filter((cell) => cell.given).map((cell) => `${cell.row}-${cell.col}`));
+    const wrongValueOnGiven = result.errors.some(
+      (error) => error.reason === "wrong-value" && givenPositions.has(`${error.row}-${error.col}`),
+    );
+    expect(wrongValueOnGiven).toBe(false);
+    expect(result.errors.some((error) => error.row === 2 && error.col === 1)).toBe(true);
   });
 });
 

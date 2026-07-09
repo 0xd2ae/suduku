@@ -20,7 +20,7 @@ function checkGroup(cells: Cell[], reason: Reason, errors: Map<string, { row: nu
   for (const duplicates of byValue.values()) {
     if (duplicates.length > 1) {
       for (const cell of duplicates) {
-        if (!cell.given) addError(errors, cell.row, cell.col, reason);
+        addError(errors, cell.row, cell.col, reason);
       }
     }
   }
@@ -65,6 +65,6 @@ export function markErrors(cells: Cell[], checkMode: CheckMode = "solution-check
   const errorKeys = new Set(validation.errors.map((error) => `${error.row}-${error.col}`));
   return cells.map((cell) => ({
     ...cell,
-    error: !cell.given && errorKeys.has(`${cell.row}-${cell.col}`),
+    error: errorKeys.has(`${cell.row}-${cell.col}`),
   }));
 }
